@@ -13,9 +13,21 @@ dependencies = [
 
 [project.optional-dependencies]
 test = ["pytest"]
+dev = ["pre-commit"]
 
 [tool.black]
 line-length = 79
+
+[tool.mypy]
+ignore_missing_imports = true
+implicit_optional = true
+
+# Declare that package source is in src/. Prevent mypy from complaining that
+# examples/convergence.py and src/nmbx/convergence.py have the same name. My
+# god, that tool is picky!
+explicit_package_bases = true
+mypy_path = "./src"
+
 
 [build-system]
 requires = ["setuptools>=66.1", "wheel"]

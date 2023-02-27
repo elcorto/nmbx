@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+    - id: black
+
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.253'
+    hooks:
+      - id: ruff
+
+  # mypy is often being deliberately stupid. Also slow. Can't have that as a
+  # hook. Better run by hand.
+  ##- repo: https://github.com/pre-commit/mirrors-mypy
+  ##  rev: 'v1.0.1'
+  ##  hooks:
+  ##  - id: mypy
