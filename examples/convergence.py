@@ -41,7 +41,10 @@ rng = np.random.default_rng(seed=123)
 for noise in [0, 0.05]:
     y = func(x) + rng.normal(scale=noise, size=len(x))
     fig, axs = plt.subplots(
-        nrows=nrows, ncols=ncols, figsize=(5 * ncols, 5 * nrows)
+        nrows=nrows,
+        ncols=ncols,
+        figsize=(4 * ncols, 4 * nrows),
+        tight_layout=True,
     )
     fig.suptitle(f"{noise=}")
 
@@ -74,10 +77,12 @@ for noise in [0, 0.05]:
                     ".",
                     label=label,
                 )
+                ylo = 0.8
+                ax.set_ylim(bottom=ylo)
                 if len(x_detect) > 0:
                     ax.vlines(
                         x_detect[0],
-                        0.9,
+                        ylo,
                         y_detect[0],
                         colors=line.get_color(),
                         linestyles="--",
