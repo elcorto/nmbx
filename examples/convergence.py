@@ -52,7 +52,7 @@ for noise in [0, 0.05]:
         ##ic(irow, method_name, const_dct)
         for icol, (vary_key, vary_vals) in enumerate(vary.items()):
             ax = axs[irow, icol]
-            ax.plot(x, y, ".", alpha=0.2)
+            ax.plot(y, ".", alpha=0.2)
             ax.set_title(f"{method_map[method_name].__name__} vary={vary_key}")
             for i_vary, vary_val in enumerate(vary_vals):
                 kwds = copy.copy(const_dct)
@@ -62,7 +62,6 @@ for noise in [0, 0.05]:
                 conv = method_map[method_name](**kwds)
 
                 for ii in range(1, len(x)):
-                    x_cur = x[:ii]
                     y_cur = y[:ii]
                     res[ii] = conv.check(y_cur)
 
@@ -70,9 +69,10 @@ for noise in [0, 0.05]:
                     f"{k}={v}" for k, v in kwds.items() if k != "reduction"
                 )
                 x_detect = x[res]
+                x_detect_plot = np.arange(len(x))[res]
                 y_detect = func(x_detect) + y_offset * (i_vary + 1)
                 (line,) = ax.plot(
-                    x_detect,
+                    x_detect_plot,
                     y_detect,
                     ".",
                     label=label,
@@ -81,7 +81,7 @@ for noise in [0, 0.05]:
                 ax.set_ylim(bottom=ylo)
                 if len(x_detect) > 0:
                     ax.vlines(
-                        x_detect[0],
+                        x_detect_plot[0],
                         ylo,
                         y_detect[0],
                         colors=line.get_color(),
@@ -90,4 +90,5 @@ for noise in [0, 0.05]:
 
     for ax in axs.flat:
         ax.legend()
+        ax.set_xlabel("iteration")
 plt.show()
