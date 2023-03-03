@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+
+
 import copy
 
 import numpy as np
@@ -38,7 +40,7 @@ ncols = len(vary)
 
 rng = np.random.default_rng(seed=123)
 
-for noise in [0, 0.05]:
+for name, noise in [("no_noise", 0), ("noise", 0.05)]:
     y = func(x) + rng.normal(scale=noise, size=len(x))
     fig, axs = plt.subplots(
         nrows=nrows,
@@ -91,4 +93,7 @@ for noise in [0, 0.05]:
     for ax in axs.flat:
         ax.legend()
         ax.set_xlabel("iteration")
+
+    ##fig.savefig(f"conv_{name}.png")
+
 plt.show()
