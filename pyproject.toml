@@ -11,12 +11,19 @@ dependencies = [
     "numpy",
 ]
 
+
 [project.optional-dependencies]
 test = ["pytest"]
 dev = ["pre-commit"]
 
+
 [tool.black]
 line-length = 79
+
+
+[tool.ruff]
+line-length = 79
+
 
 [tool.mypy]
 ignore_missing_imports = true
