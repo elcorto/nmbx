@@ -64,7 +64,7 @@ def test_no_wait():
 
 
 def test_wait():
-    conv = FakeCheck(wlen=1, wait=3)
+    conv = FakeCheck(wlen=1, wait=3, standardize=False)
 
     y = [0, 0, 0]
     assert not conv.check(y)

@@ -20,19 +20,31 @@ class Base:
         wait: int = None,
         tol: float = None,
         reduction: Callable = np.mean,
+        standardize: bool = True,
+        std_eps: float = 1e-16,
+        std_reduction: Callable = np.median,
     ):
         self.tol = tol
         self.wait = wait
         self.wlen = wlen
         self.reduction = reduction
+        self.standardize = standardize
+        self.std_eps = std_eps
+        self.std_reduction = std_reduction
 
         self._wait_counter = 1
         self._prev_check_result = False
 
     def check(self, history: Sequence[float]):
-        if len(history) < (2 * self.wlen):
+        if self.standardize:
+            hist = (history - self.std_reduction(history)) / (
+                np.std(history) + self.std_eps
+            )
+        else:
+            hist = history
+        if len(hist) < (2 * self.wlen):
             return False
-        result = self._check_once(history)
+        result = self._check_once(hist)
         if self.wait is None:
             return result
         if result and self._prev_check_result:
@@ -42,9 +54,9 @@ class Base:
         self._prev_check_result = result
         return self._wait_counter >= self.wait
 
-    def _get_prev_last(self, history):
-        prev = self.reduction(np.array(history[-2 * self.wlen : -self.wlen]))
-        last = self.reduction(np.array(history[-self.wlen :]))
+    def _get_prev_last(self, hist):
+        prev = self.reduction(np.array(hist[-2 * self.wlen : -self.wlen]))
+        last = self.reduction(np.array(hist[-self.wlen :]))
         return prev, last
 
     def _check_once(self, *args, **kwds):

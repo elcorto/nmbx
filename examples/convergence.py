@@ -22,11 +22,11 @@ def func(x, y0=1.0):
 func = np.frompyfunc(func, 1, 1)
 
 const = {
-    "zero": dict(wlen=15, tol=0.01, wait=None, reduction=np.mean),
-    "rise": dict(wlen=15, tol=0.01, wait=None, reduction=np.mean),
+    "zero": dict(wlen=15, tol=0.05, wait=None, reduction=np.mean),
+    "rise": dict(wlen=15, tol=0.05, wait=None, reduction=np.mean),
 }
 
-vary = dict(wlen=[1, 15, 50], tol=[0.001, 0.01, 0.05, 0.1], wait=[None, 5, 10])
+vary = dict(wlen=[1, 15, 30], tol=[0.01, 0.05, 0.1], wait=[None, 5, 10])
 
 method_map = dict(zero=SlopeZero, rise=SlopeRise)
 
@@ -40,7 +40,7 @@ ncols = len(vary)
 
 rng = np.random.default_rng(seed=123)
 
-for name, noise in [("no_noise", 0), ("noise", 0.05)]:
+for name, noise in [("no_noise", 0), ("noise", 0.03)]:
     y = func(x) + rng.normal(scale=noise, size=len(x))
     fig, axs = plt.subplots(
         nrows=nrows,
@@ -94,6 +94,6 @@ for name, noise in [("no_noise", 0), ("noise", 0.05)]:
         ax.legend()
         ax.set_xlabel("iteration")
 
-    ##fig.savefig(f"conv_{name}.png")
+    fig.savefig(f"conv_{name}.png")
 
 plt.show()
