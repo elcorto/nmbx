@@ -23,6 +23,7 @@ class Base:
         standardize: bool = True,
         std_eps: float = 1e-16,
         std_reduction: Callable = np.median,
+        verbose: bool = False,
     ):
         self.tol = tol
         self.wait = wait
@@ -31,6 +32,7 @@ class Base:
         self.standardize = standardize
         self.std_eps = std_eps
         self.std_reduction = std_reduction
+        self.verbose = verbose
 
         self._wait_counter = 1
         self._prev_check_result = False
@@ -73,7 +75,12 @@ class SlopeRise(Base):
 
     def _check_once(self, history: Sequence[float]):
         prev, last = self._get_prev_last(history)
-        return last - self.tol > prev
+        val = last - self.tol
+        cond = val > prev
+        if self.verbose:
+            op = ">" if cond else "<"
+            print(f"{prev=} - tol={self.tol} = {val} {op} {prev=}")
+        return cond
 
 
 class SlopeZero(Base):
@@ -90,7 +97,12 @@ class SlopeZero(Base):
 
     def _check_once(self, history: Sequence[float]):
         prev, last = self._get_prev_last(history)
-        return abs(last - prev) < self.tol
+        val = abs(last - prev)
+        cond = val < self.tol
+        if self.verbose:
+            op = "<" if cond else ">"
+            print(f"|{last=} - {prev=}| = {val} {op} tol={self.tol}")
+        return cond
 
 
 EarlyStopping = SlopeRise
