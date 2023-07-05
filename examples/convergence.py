@@ -6,7 +6,6 @@ import copy
 import numpy as np
 from matplotlib import pyplot as plt
 
-
 from nmbx.convergence import SlopeRise, SlopeZero
 
 

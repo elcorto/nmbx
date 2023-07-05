@@ -1,4 +1,5 @@
-from typing import Sequence, Callable
+from typing import Callable, Sequence
+
 import numpy as np
 
 

@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
-from nmbx.convergence import SlopeZero, SlopeRise, Base
+
+from nmbx.convergence import Base, SlopeRise, SlopeZero
 
 # -----------------------------------------------------------------------------
 # Helpers
