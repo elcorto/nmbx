@@ -41,14 +41,14 @@ class Base:
         assert self.wait >= 1, "wait must be >= 1"
 
     def check(self, history: Sequence[float]):
+        if len(history) < (2 * self.wlen):
+            return False
         if self.standardize:
             hist = (history - self.std_reduction(history)) / (
                 np.std(history) + self.std_eps
             )
         else:
             hist = history
-        if len(hist) < (2 * self.wlen):
-            return False
         result = self._check_once(hist)
         if self.wait == 1:
             return result
