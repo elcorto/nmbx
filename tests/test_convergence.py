@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 from nmbx.convergence import SlopeZero, SlopeRise, Base
 
 # -----------------------------------------------------------------------------
@@ -53,8 +54,11 @@ def test_rise_only():
     assert conv.check(y)
 
 
-def test_no_wait():
-    conv = FakeCheck(wlen=1, wait=None)
+@pytest.mark.parametrize(
+    "wait", [1, None, pytest.param(0, marks=pytest.mark.xfail)]
+)
+def test_no_wait(wait):
+    conv = FakeCheck(wlen=1, wait=wait)
 
     y = [0, 0, 0]
     assert not conv.check(y)

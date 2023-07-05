@@ -6,8 +6,8 @@ class Base:
     """Detect convergence of the numbers in `history` passed to check().
     _check_once() implements the condition that must be True in order to be
     treated as converged. `wait` (a.k.a. "patience") requires the condition to
-    be True `wait` times in a row in consecutive check(history) calls, where we
-    assume that new points are appended to `history` in between calls.
+    be True `wait` times in a row in consecutive check(history) calls,
+    where we assume that new points are appended to `history` in between calls.
 
     To filter noise in `history` we compare means (default, see `reduction`) of
     `wlen` entries in `history`. When using `wait`, then we have a moving
@@ -17,7 +17,7 @@ class Base:
     def __init__(
         self,
         wlen: int = 1,
-        wait: int = None,
+        wait: int = 1,
         tol: float = None,
         reduction: Callable = np.mean,
         standardize: bool = True,
@@ -26,7 +26,7 @@ class Base:
         verbose: bool = False,
     ):
         self.tol = tol
-        self.wait = wait
+        self.wait = 1 if wait is None else wait
         self.wlen = wlen
         self.reduction = reduction
         self.standardize = standardize
@@ -36,6 +36,9 @@ class Base:
 
         self._wait_counter = 1
         self._prev_check_result = False
+
+        assert self.wlen >= 1, "wlen must be >= 1"
+        assert self.wait >= 1, "wait must be >= 1"
 
     def check(self, history: Sequence[float]):
         if self.standardize:
@@ -47,7 +50,7 @@ class Base:
         if len(hist) < (2 * self.wlen):
             return False
         result = self._check_once(hist)
-        if self.wait is None:
+        if self.wait == 1:
             return result
         if result and self._prev_check_result:
             self._wait_counter += 1
