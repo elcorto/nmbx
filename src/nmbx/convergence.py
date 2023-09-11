@@ -2,6 +2,9 @@ from typing import Callable, Sequence
 
 import numpy as np
 
+# ~2.2e-16
+EPS = np.finfo(np.float64).eps
+
 
 class Base:
     """Detect convergence of the numbers in `history` passed to check().
@@ -22,7 +25,7 @@ class Base:
         tol: float = None,
         reduction: Callable = np.mean,
         standardize: bool = True,
-        std_eps: float = 1e-16,
+        std_eps: float = EPS,
         std_reduction: Callable = np.median,
         verbose: bool = False,
     ):
