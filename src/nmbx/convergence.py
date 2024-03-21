@@ -8,14 +8,22 @@ EPS = np.finfo(np.float64).eps
 
 class Base:
     """Detect convergence of the numbers in `history` passed to check().
-    _check_once() implements the condition that must be True in order to be
-    treated as converged. `wait` (a.k.a. "patience") requires the condition to
-    be True `wait` times in a row in consecutive check(history) calls,
-    where we assume that new points are appended to `history` in between calls.
 
-    To filter noise in `history` we compare means (default, see `reduction`) of
-    `wlen` entries in `history`. When using `wait`, then we have a moving
-    average filter. Use `wlen=1` to disable smoothing.
+    Example
+    -------
+    from nmbx.convergence import SlopeRise
+
+    # Early stopping with wait=10 iterations of "patience", a tolerance of 0.01 and
+    # a moving average window of 25 points.
+    conv = SlopeRise(wlen=25, tol=0.01, wait=10)
+
+    history = []
+    while True:
+        loss = compute_loss(model, data)
+        history.append(loss)
+        if conv.check(history):
+            print("converged")
+            break
     """
 
     def __init__(
@@ -29,6 +37,38 @@ class Base:
         std_reduction: Callable = np.median,
         verbose: bool = False,
     ):
+        """
+        Parameters
+        ----------
+        wlen
+            Window length over which to take reductions. To filter noise in
+            `history` we compare means (default, see `reduction`) of `wlen`
+            entries in `history`, for example last=mean(history[-wlen:]),
+            prev=mean(history[-2*wlen:-wlen]). When using `wait`, then we have
+            a moving average filter. Use `wlen=1` to disable smoothing. Then
+            last=history[-1] and prev=history[-2].
+        wait
+            (a.k.a. "patience") requires the convergence condition to be True
+            `wait` times in a row in consecutive check(history) calls, where we
+            assume that new points are appended to `history` in between calls.
+        tol
+            Tolerance for convergence check. The meaning is defined in derived
+            classes _check_once() methods.
+        reduction
+            Something like np.mean() or np.median, used with `wlen`
+        standardize
+            Standardize history data. Use this to have roughly transferable
+            `tol` values for different applications, independent of the
+            numerical values (both shift and scale) in history.
+        std_eps
+            Small value to prevent zero division
+        std_reduction
+            Something like np.mean() or np.median. Applied to whole `history`
+            array when standardize=True in each call to check().
+        verbose
+            Print diagnostics
+        """
+
         self.tol = tol
         self.wait = 1 if wait is None else wait
         self.wlen = wlen
@@ -69,6 +109,10 @@ class Base:
         return prev, last
 
     def _check_once(self, *args, **kwds):
+        """Implements the convergence condition.
+
+        Called in check().
+        """
         raise NotImplementedError
 
 
