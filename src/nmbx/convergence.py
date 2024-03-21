@@ -31,7 +31,7 @@ class Base:
         wlen: int = 1,
         wait: int = 1,
         tol: float = None,
-        reduction: Callable = np.mean,
+        reduction: Callable = np.median,
         standardize: bool = True,
         std_eps: float = EPS,
         std_reduction: Callable = np.median,
@@ -55,7 +55,9 @@ class Base:
             Tolerance for convergence check. The meaning is defined in derived
             classes _check_once() methods.
         reduction
-            Something like np.mean() or np.median, used with `wlen`
+            Something like np.mean() or np.median, used with `wlen`. The
+            default (median) makes this more robust against short spikes, which
+            are often encountered with stochastic optimizers.
         standardize
             Standardize history data. Use this to have roughly transferable
             `tol` values for different applications, independent of the
