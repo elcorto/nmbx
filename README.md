@@ -44,11 +44,11 @@ robust than vanilla "early stopping":
   stochastic optimizers), so we have the option to smooth them by using a
   moving average.
 
-* standardization (z-score-like): By default, we standardize to zero median and
-  unity standard deviation. This should give you roughly transferable
-  convergence tolerances independent of the numerical scale of the history
-  values. We use the median to be more robust against outliers such as short
-  spikes in the history. Set `std_reduction=np.mean` for a real z-score.
+* standardization (z-score-like): By default, we standardize `history` to zero
+  median and unity standard deviation. This should give you roughly
+  transferable convergence tolerances independent of the numerical scale of the
+  history values. We use the median to be more robust against outliers such as
+  short spikes in the history. Set `std_reduction=np.mean` for a real z-score.
 
 `wlen=1` means a window of one, so no noise filtering. In case of `SlopeRise`,
 this is the traditional early stopping. For more on convergence detection, check
@@ -63,15 +63,33 @@ method. In short
 * `SlopeRise`: `last - tol > prev`
 * `SlopeZero`: `|last - prev| < tol`
 
-where `last` and `prev` are the mean over the last and previous non-overlapping
-windows of `wlen` points each. To change the mean to, say, the median, set
-`reduction=np.median`.
+where `last` and `prev` are the median (default) over the last and previous
+non-overlapping windows of `wlen` points each. To change the median to, say, the
+mean, set `reduction=np.mean`.
 
 Here are some results (from `examples/convergence.py`) with noise-free and
 noisy histories, where we explore the parameters `wlen`, `tol` and `wait`. Blue
 points are the histories. The other points indicate when `check()` is True. The
 points marked with vertical dashed lines are the *first* points where the check
-is True, i.e. where you would break out of the training loop.
+is True, i.e. where you would break out of the training loop. If no colored
+points show up, then this means that the corresponding parameter setting leads
+to no convergence detection.
 
 ![](doc/pics/conv_no_noise.png)
 ![](doc/pics/conv_noise.png)
+
+We observe that `SlopeZero` is pretty robust against noise, while `SlopeRise`
+works if parameters are chosen accordingly.
+
+Here are some recommendations:
+
+* Use `wlen` > 1 (smoothing) and `wait` > 1 ("patience").
+* When data is noisy, raise `tol` to prevent too early / false convergence
+  detection.
+* There is no free lunch, parameters need to be tuned to the use case at hand.
+  Do not blindly apply convergence detection. The technique is suited for many
+  similar training runs, where you have an idea of when convergence occurs.
+
+The value of convergence detection is that you have a defined and transparent
+*criterion*, which is more scientific than statements such as "we trained with
+Adam for 400 epochs".

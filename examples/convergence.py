@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import copy
 
 import numpy as np
@@ -9,30 +8,36 @@ from matplotlib import pyplot as plt
 from nmbx.convergence import SlopeRise, SlopeZero
 
 
-def func(x, y0=1.0):
-    if x <= 0:
-        return y0 + x**2
-    elif x <= 0.5:
+def func_single_point(x, y0=1.0, y_fall_stop=0, y_rise_start=2.5):
+    if x <= y_fall_stop:
+        return y0 + x**2.0
+    elif x <= y_rise_start:
         return y0
     else:
-        return y0 + (x - 0.5) ** 2.0 / 10.0
+        return y0 + (x - y_rise_start) ** 2.0 / 10.0
 
 
-func = np.frompyfunc(func, 1, 1)
+np_func = np.frompyfunc(func_single_point, 1, 1)
 
 const = {
-    "zero": dict(wlen=15, tol=0.05, wait=None, reduction=np.mean),
-    "rise": dict(wlen=15, tol=0.05, wait=None, reduction=np.mean),
+    "zero": dict(wlen=15, tol=0.05, wait=5, reduction=np.mean),
+    "rise": dict(wlen=15, tol=0.1, wait=5, reduction=np.mean),
 }
 
-vary = dict(wlen=[1, 15, 30], tol=[0.01, 0.05, 0.1], wait=[None, 5, 10])
+vary = dict(wlen=[1, 15, 30], tol=[0.01, 0.05, 0.1], wait=[1, 5, 10])
 
 method_map = dict(zero=SlopeZero, rise=SlopeRise)
 
 
 dx = 0.01
-y_offset = 0.05
-x = np.arange(-1, 1.5, dx)
+x = np.arange(-1, 4.5, dx)
+
+y_scale = 20
+y_shift = 100
+
+# Shift and scale to show effect of standardize=True .
+func = lambda x: np_func(x) * y_scale + y_shift
+
 
 nrows = len(const)
 ncols = len(vary)
@@ -40,7 +45,12 @@ ncols = len(vary)
 rng = np.random.default_rng(seed=123)
 
 for name, noise in [("no_noise", 0), ("noise", 0.03)]:
-    y = func(x) + rng.normal(scale=noise, size=len(x))
+    y = func(x) + rng.normal(scale=noise * y_scale, size=len(x))
+    ymin = y.min()
+    ymax = y.max()
+    yspan = ymax - ymin
+    ylo = ymin - 0.1 * yspan
+    y_offset = 0.05 * yspan
     fig, axs = plt.subplots(
         nrows=nrows,
         ncols=ncols,
@@ -78,7 +88,6 @@ for name, noise in [("no_noise", 0), ("noise", 0.03)]:
                     ".",
                     label=label,
                 )
-                ylo = 0.8
                 ax.set_ylim(bottom=ylo)
                 if len(x_detect) > 0:
                     ax.vlines(
