@@ -30,6 +30,7 @@ class Base:
         self,
         wlen: int = 1,
         wait: int = 1,
+        delay: int = 0,
         tol: float = None,
         reduction: Callable = np.median,
         standardize: bool = True,
@@ -51,6 +52,8 @@ class Base:
             (a.k.a. "patience") requires the convergence condition to be True
             `wait` times in a row in consecutive check(history) calls, where we
             assume that new points are appended to `history` in between calls.
+        delay
+            Start checking for convergence only after this many iterations.
         tol
             Tolerance for convergence check. The meaning is defined in derived
             classes _check_once() methods.
@@ -74,6 +77,7 @@ class Base:
         self.tol = tol
         self.wait = 1 if wait is None else wait
         self.wlen = wlen
+        self.delay = delay
         self.reduction = reduction
         self.standardize = standardize
         self.std_eps = std_eps
@@ -87,7 +91,7 @@ class Base:
         assert self.wait >= 1, "wait must be >= 1"
 
     def check(self, history: Sequence[float]):
-        if len(history) < (2 * self.wlen):
+        if len(history) < (2 * self.wlen + self.delay):
             return False
         if self.standardize:
             hist = (history - self.std_reduction(history)) / (
