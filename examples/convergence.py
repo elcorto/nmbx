@@ -24,7 +24,9 @@ const = {
     "rise": dict(wlen=15, tol=0.1, wait=5),
 }
 
-vary = dict(wlen=[1, 15, 30], tol=[0.01, 0.05, 0.1], wait=[1, 5, 10])
+vary = dict(
+    wlen=[1, 15, 30], tol=[0.01, 0.05, 0.1], wait=[1, 5, 10], delay=[0, 200]
+)
 
 method_map = dict(zero=SlopeZero, rise=SlopeRise)
 
