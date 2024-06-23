@@ -23,6 +23,9 @@ line-length = 79
 
 [tool.ruff]
 line-length = 79
+lint.ignore = [
+    "E731", # Do not assign a lambda expression, use a def
+]
 
 
 [tool.mypy]
