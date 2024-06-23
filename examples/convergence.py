@@ -20,8 +20,8 @@ def func_single_point(x, y0=1.0, y_fall_stop=0, y_rise_start=2.5):
 np_func = np.frompyfunc(func_single_point, 1, 1)
 
 const = {
-    "zero": dict(wlen=15, tol=0.05, wait=5, reduction=np.mean),
-    "rise": dict(wlen=15, tol=0.1, wait=5, reduction=np.mean),
+    "zero": dict(wlen=15, tol=0.05, wait=5),
+    "rise": dict(wlen=15, tol=0.1, wait=5),
 }
 
 vary = dict(wlen=[1, 15, 30], tol=[0.01, 0.05, 0.1], wait=[1, 5, 10])
