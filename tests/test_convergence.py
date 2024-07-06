@@ -93,3 +93,15 @@ def test_wait():
     y = [0, 0, 0, 1, 1, 1, 0, 1]
     assert not conv.check(y)
     assert conv._wait_counter == 1
+
+
+def test_delay():
+    history = [1] * 10
+
+    for delay in [0, 8]:
+        conv = SlopeZero(wait=1, wlen=1, delay=delay, tol=0.1)
+        assert conv.check(history)
+
+    for delay in [9, 10]:
+        conv = SlopeZero(wait=1, wlen=1, delay=delay, tol=0.1)
+        assert not conv.check(history)
