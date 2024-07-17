@@ -1,53 +1,54 @@
 #!/usr/bin/env python3
 
 import copy
+import textwrap
 
 import numpy as np
 from matplotlib import pyplot as plt
 
-from nmbx.convergence import SlopeRise, SlopeZero
+from nmbx.convergence import (
+    SlopeRise,
+    SlopeZeroAbs,
+    SlopeZeroMin,
+    smooth_gauss,
+)
+from nmbx.utils import generate_history_data
 
-
-def func_single_point(x, y0=1.0, y_fall_stop=0, y_rise_start=2.5):
-    if x <= y_fall_stop:
-        return y0 + x**2.0
-    elif x <= y_rise_start:
-        return y0
-    else:
-        return y0 + (x - y_rise_start) ** 2.0 / 10.0
-
-
-np_func = np.frompyfunc(func_single_point, 1, 1)
+plt.rcParams.update({"font.size": 11, "legend.fontsize": 11})
 
 const = {
-    "zero": dict(wlen=15, tol=0.05, wait=5),
-    "rise": dict(wlen=15, tol=0.1, wait=5),
+    "zero_abs": dict(wlen=15, wait=5, std="std", delay=0, smooth_sigma=None),
+    "zero_min": dict(wlen=15, wait=5, std="std", delay=0, smooth_sigma=None),
+    "rise": dict(wlen=15, wait=5, std="std", delay=0, smooth_sigma=None),
 }
 
 vary = dict(
-    wlen=[1, 15, 30], tol=[0.01, 0.05, 0.1], wait=[1, 5, 10], delay=[0, 200]
+    atol=[0.01, 0.05, 0.1],
+    wlen=[1, 15, 30],
+    wait=[1, 5, 10],
+    delay=[0, 200],
+    std=["std", "smad", "siqr"],
+    smooth_sigma=[None, 10, 30],
+    ##wlen_avg=[np.mean, np.median],
+    ##std_avg=[np.mean, np.median],
 )
 
-method_map = dict(zero=SlopeZero, rise=SlopeRise)
+method_map = dict(
+    zero_abs=SlopeZeroAbs,
+    zero_min=SlopeZeroMin,
+    rise=SlopeRise,
+)
 
-
-dx = 0.01
-x = np.arange(-1, 4.5, dx)
-
-y_scale = 20
-y_shift = 100
-
-# Shift and scale to show effect of standardize=True .
-func = lambda x: np_func(x) * y_scale + y_shift
-
-
+legend_map = dict(
+    zero_min="SlopeZero(mode='min')",
+    zero_abs="SlopeZero(mode='abs')",
+    rise="SlopeRise",
+)
 nrows = len(const)
 ncols = len(vary)
 
-rng = np.random.default_rng(seed=123)
-
-for name, noise in [("no_noise", 0), ("noise", 0.03)]:
-    y = func(x) + rng.normal(scale=noise * y_scale, size=len(x))
+for name, noise, atol in [("no_noise", 0, 0.05), ("noise", 0.03, 0.05)]:
+    x, y, func = generate_history_data(noise)
     ymin = y.min()
     ymax = y.max()
     yspan = ymax - ymin
@@ -62,24 +63,20 @@ for name, noise in [("no_noise", 0), ("noise", 0.03)]:
     fig.suptitle(f"{noise=}")
 
     for irow, (method_name, const_dct) in enumerate(const.items()):
-        ##ic(irow, method_name, const_dct)
         for icol, (vary_key, vary_vals) in enumerate(vary.items()):
             ax = axs[irow, icol]
             ax.plot(y, ".", alpha=0.2)
-            ax.set_title(f"{method_map[method_name].__name__} vary={vary_key}")
             for i_vary, vary_val in enumerate(vary_vals):
                 kwds = copy.copy(const_dct)
+                # In case we want to use a different atol for no_noise and
+                # noise, we need to set it here.
+                kwds["atol"] = atol
                 kwds[vary_key] = vary_val
-                ##ic(kwds)
-                res = np.zeros_like(x).astype(bool)
-                conv = method_map[method_name](**kwds)
 
-                for ii in range(1, len(x)):
-                    y_cur = y[:ii]
-                    res[ii] = conv.check(y_cur)
+                res = method_map[method_name](**kwds).check_all(y)
 
-                label = " ".join(
-                    f"{k}={v}" for k, v in kwds.items() if k != "reduction"
+                title = " ".join(
+                    f"{k}={v}" for k, v in kwds.items() if k != vary_key
                 )
                 x_detect = x[res]
                 x_detect_plot = np.arange(len(x))[res]
@@ -88,9 +85,13 @@ for name, noise in [("no_noise", 0), ("noise", 0.03)]:
                     x_detect_plot,
                     y_detect,
                     ".",
-                    label=label,
+                    label=f"{vary_key}={kwds[vary_key]}",
                 )
                 ax.set_ylim(bottom=ylo)
+                if irow == 0:
+                    ax.set_title("\n".join(textwrap.wrap(title, width=20)))
+                if irow == nrows - 1:
+                    ax.set_xlabel("iteration")
                 if len(x_detect) > 0:
                     ax.vlines(
                         x_detect_plot[0],
@@ -99,10 +100,13 @@ for name, noise in [("no_noise", 0), ("noise", 0.03)]:
                         colors=line.get_color(),
                         linestyles="--",
                     )
-
-    for ax in axs.flat:
-        ax.legend()
-        ax.set_xlabel("iteration")
+                if kwds["smooth_sigma"] is not None:
+                    ax.plot(
+                        smooth_gauss(y, kwds["smooth_sigma"]),
+                        ls="-",
+                        color=line.get_color(),
+                    )
+            ax.legend(title=legend_map[method_name], loc="upper right")
 
     fig.savefig(f"conv_{name}.png")
 
