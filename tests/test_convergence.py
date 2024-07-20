@@ -12,6 +12,7 @@ from nmbx.convergence import (
     SlopeZeroAbs,
     SlopeZeroMax,
     smooth_gauss,
+    MultiCheck,
 )
 
 STD_FUNCS = Base.get_std_funcs()
@@ -358,3 +359,12 @@ def test_gaussian_filter(mode):
         assert conv.check(y_noise)
     else:
         raise ValueError("mode!? {mode=}")
+
+
+def test_multi_check():
+    histories = dict(
+        a=[4, 3, 2] + [1]*3, b=[7,6,5] + [1]*10
+    )
+    assert MultiCheck(
+        SlopeZero, names=histories.keys(), atol=0.1, verbose=True
+    ).check(histories)
