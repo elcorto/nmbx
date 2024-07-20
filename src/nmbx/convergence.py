@@ -267,7 +267,29 @@ class SlopeZero(Base):
         return cond
 
 
-# partial FTW! Aliases mainly for tests and to save some typing in examples.
+class MultiCheck:
+    """Apply a check to multiple histories. Return True when all checks are
+    True.
+    """
+
+    def __init__(self, cls: Base, names: Sequence[str], **kwds):
+        self.checkers = {n: cls(**kwds) for n in names}
+        self.names = names
+        self._set_names = set(names)
+        self.verbose = kwds.get("verbose", False)
+
+    def check(self, histories: dict[str, Sequence[float]]):
+        assert set(histories.keys()) == self._set_names
+        all_results = True
+        for name, hist in histories.items():
+            this_result = self.checkers[name].check(hist)
+            if self.verbose and this_result:
+                print(f"{name} converged at iter={len(hist)}")
+            all_results = all_results and this_result
+        return all_results
+
+
+# Aliases mainly for tests and to save some typing in examples.
 SlopeZeroAbs = partial(SlopeZero, mode="abs")
 SlopeZeroMin = partial(SlopeZero, mode="min")
 SlopeZeroMax = partial(SlopeZero, mode="max")
