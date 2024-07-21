@@ -17,8 +17,6 @@ def smooth_gauss(y, sigma):
 
 
 class Base:
-    """Detect convergence of the numbers in `history` passed to check()."""
-
     def __init__(
         self,
         wlen: int = 1,
@@ -183,9 +181,9 @@ class Base:
             if self.check(history[:ii]):
                 return ii - 1
 
-    def _get_prev_last_tol(self, hist):
-        prev = self.wlen_avg(np.array(hist[-2 * self.wlen : -self.wlen]))
-        last = self.wlen_avg(np.array(hist[-self.wlen :]))
+    def _get_prev_last_tol(self, history):
+        prev = self.wlen_avg(np.array(history[-2 * self.wlen : -self.wlen]))
+        last = self.wlen_avg(np.array(history[-self.wlen :]))
         if self.rtol is not None:
             tol = self.rtol * prev
             if abs(tol) < 2 * EPS:
