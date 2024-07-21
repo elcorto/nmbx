@@ -56,7 +56,7 @@ class FakeCheck(Base):
 
 def get_f_std(std):
     if std is None:
-        f_std = lambda h: 1
+        f_std = lambda h: 1.0
     elif isinstance(std, str):
         f_std = lambda h: STD_FUNCS[std](h)
     else:
@@ -185,29 +185,42 @@ def _gen_combos_std_scale_offset(
 
 
 @pytest.mark.parametrize("std, scale, offset", _gen_combos_std_scale_offset())
-def test_atol_std(std, scale, offset):
-    """For the manually created data below, all std methods work (same pos_idx
-    and bool_arr for all scale and offset).
+@pytest.mark.parametrize("std_avg", [np.mean, np.median])
+def test_atol_std(std, scale, offset, std_avg):
+    """How to find a good atol when std != None: Here in the tests we do
+
+        atol = atol_ref / f_std(history[:pos_idx])
+
+    where f_std = np.std, scipy.stats.iqr, ... and atol_ref is the tolerance
+    where check_first() returns pos_idx when no standardization is used
+    (std=None). Using f_std(history[:pos_idx]) allows us scale atol such that
+    we have the same pos_idx also when using standardization. It doesn't have to
+    be this value exactly, important is that the scaled atol is in the right
+    ball park. In practice (online setting) you don't have access to the
+    history and therefore can't do this, unless you have a recorded reference
+    history. But note that you won't (probably) need to find the *exact*
+    pos_idx anyway, but only one that is close enough. In the absence of any
+    knowledge about the incoming history data, start experimenting with
+    atol=0.01 (stop when things fluctuate by less than 1% standard
+    deviation), for example.
     """
+
     history = np.array([20, 10, 5, 2, 1, 1, 1, 6, 6.2])
     arr_zero_abs = np.array([0, 0, 0, 0, 1, 1, 1, 0, 1], dtype=bool)
     arr_zero_min = np.array([0, 0, 0, 0, 1, 1, 1, 1, 1], dtype=bool)
     arr_rise = np.array([0, 0, 0, 0, 0, 0, 0, 1, 0], dtype=bool)
 
     f_std = get_f_std(std)
+    atol_ref = 1.1
+    wlen = 1
+    kwds = dict(wlen=wlen, std_avg=std_avg)
 
     for cls, pos_idx, bool_arr in [
         (SlopeZeroAbs, 4, arr_zero_abs),
         (SlopeZeroMin, 4, arr_zero_min),
         (SlopeRise, 7, arr_rise),
     ]:
-        # atol = 1.1 is for the raw history values (scale=1, offset=0). atol =
-        # 1.1 / std(y) and using std != None makes atol invariant to affine
-        # transforms y * scale + offset. This is because in standardization, (y
-        # - std_avg(y)) / std(y) removes the offset and scales y to be in units
-        # of std(y).
-        atol = 1.1 / f_std(history)
-        conv = cls(atol=atol, std=std)
+        conv = cls(atol=atol_ref / f_std(history[:pos_idx]), std=std, **kwds)
         assert conv.check_first(history * scale + offset) == pos_idx
         assert (conv.check_all(history * scale + offset) == bool_arr).all()
 
@@ -221,28 +234,22 @@ def test_atol_std(std, scale, offset):
         (get_xy_rise_to_flat, SlopeZero, "abs"),
     ],
 )
-@pytest.mark.parametrize(
-    "std, scale, offset", _gen_combos_std_scale_offset(std_lst=["std"])
-)
+@pytest.mark.parametrize("std, scale, offset", _gen_combos_std_scale_offset())
 @pytest.mark.parametrize("std_avg", [np.mean, np.median])
 def test_atol_std_xy_to_flat(xy_func, cls, mode, std, scale, offset, std_avg):
-    """For generated xy data based on exp(), only std="std" works. This is also
-    reflected in the behavior of IQR and MAD in examples/visualize_std.py. So
-    better stick to std="std" in production.
-    """
     f_std = get_f_std(std)
     _, history = xy_func()
 
     # Get reference pos_idx and bool_arr.
-    atol_ref = 0.03
+    atol_ref = 0.01
     wlen = 1
     kwds = dict(mode=mode, wlen=wlen, std_avg=std_avg)
     conv = cls(atol=atol_ref, std=None, **kwds)
     pos_idx_ref = conv.check_first(history)
     bool_arr_ref = conv.check_all(history)
-    assert 0 < pos_idx_ref < len(history)
+    assert pos_idx_ref == 23
 
-    conv = cls(atol=atol_ref / f_std(history), std=std, **kwds)
+    conv = cls(atol=atol_ref / f_std(history[:pos_idx_ref]), std=std, **kwds)
     assert conv.check_first(history * scale + offset) == pos_idx_ref
     assert (conv.check_all(history * scale + offset) == bool_arr_ref).all()
 
@@ -256,16 +263,23 @@ def test_atol_std_xy_rise_increasing(
     f_std = get_f_std(std)
     _, history = xy_func()
 
+    # Starting out with flat noise-free data exp(x) leads to a corner case
+    # where standardization doesn't work -- we detect a rise at index=1
+    # (len(history) = 2). We need some stretch of falling data (or well
+    # anything where the check is False) first, as we also have in
+    # utils.generate_history_data().
+    history = np.concatenate((history[::-1], history))
+
     # Get reference pos_idx and bool_arr.
-    atol_ref = 0.03
+    atol_ref = 10
     wlen = 1
     kwds = dict(wlen=wlen, std_avg=std_avg)
     conv = cls(atol=atol_ref, std=None, **kwds)
     pos_idx_ref = conv.check_first(history)
     bool_arr_ref = conv.check_all(history)
-    assert 0 < pos_idx_ref < len(history)
+    assert pos_idx_ref == 146
 
-    conv = cls(atol=atol_ref / f_std(history), std=std, **kwds)
+    conv = cls(atol=atol_ref / f_std(history[:pos_idx_ref]), std=std, **kwds)
     assert conv.check_first(history * scale + offset) == pos_idx_ref
     assert (conv.check_all(history * scale + offset) == bool_arr_ref).all()
 
@@ -362,9 +376,7 @@ def test_gaussian_filter(mode):
 
 
 def test_multi_check():
-    histories = dict(
-        a=[4, 3, 2] + [1]*3, b=[7,6,5] + [1]*10
-    )
+    histories = dict(a=[4, 3, 2] + [1] * 3, b=[7, 6, 5] + [1] * 10)
     assert MultiCheck(
         SlopeZero, names=histories.keys(), atol=0.1, verbose=True
     ).check(histories)
