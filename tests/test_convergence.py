@@ -79,7 +79,8 @@ def test_fall_to_flat():
     conv = SlopeZeroMin(atol=1e-3)
     assert conv.check(y)
 
-    # In max mode, all tests are true ("convergence").
+    # In max mode, all tests are true ("convergence"), except for index 0
+    # where len(history) = 1 and no check is possible.
     conv = SlopeZeroMax(atol=1e-3)
     assert all(
         conv.check_all(y) == np.array([0] + [1] * (len(y) - 1), dtype=bool)
@@ -99,7 +100,8 @@ def test_rise_to_flat():
     conv = SlopeZeroMax(atol=1e-3)
     assert conv.check(y)
 
-    # In min mode, all tests are true ("convergence").
+    # In min mode, all tests are true ("convergence"), except for index 0
+    # where len(history) = 1 and no check is possible.
     conv = SlopeZeroMin(atol=1e-3)
     assert all(
         conv.check_all(y) == np.array([0] + [1] * (len(y) - 1), dtype=bool)
@@ -119,7 +121,8 @@ def test_rise_increasing():
     conv = SlopeZeroAbs(atol=1e-3)
     assert not conv.check(y)
 
-    # In min mode, all tests are true ("convergence").
+    # In min mode, all tests are true ("convergence"), except for index 0
+    # where len(history) = 1 and no check is possible.
     conv = SlopeZeroMin(atol=1e-3)
     assert all(
         conv.check_all(y) == np.array([0] + [1] * (len(y) - 1), dtype=bool)
@@ -240,7 +243,6 @@ def test_atol_std_xy_to_flat(xy_func, cls, mode, std, scale, offset, std_avg):
     f_std = get_f_std(std)
     _, history = xy_func()
 
-    # Get reference pos_idx and bool_arr.
     atol_ref = 0.01
     wlen = 1
     kwds = dict(mode=mode, wlen=wlen, std_avg=std_avg)
@@ -270,7 +272,6 @@ def test_atol_std_xy_rise_increasing(
     # utils.generate_history_data().
     history = np.concatenate((history[::-1], history))
 
-    # Get reference pos_idx and bool_arr.
     atol_ref = 10
     wlen = 1
     kwds = dict(wlen=wlen, std_avg=std_avg)
@@ -351,7 +352,7 @@ def test_gaussian_filter(mode):
         partial(func, y_noise=y_noise, y_gt=y_gt), x0=5
     )
     print(opt)
-    s_opt = opt.x
+    s_opt = opt.x[0]
 
     wlen = 5
 
