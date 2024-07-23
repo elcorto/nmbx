@@ -46,7 +46,7 @@ while True:
 Since we only work with a given list of numbers $y_i$ in the history, we have
 $\Delta x=1$ in the slope $\Delta y/\Delta x$. Therefore, the `atol` and `rtol`
 parameters are to be understood w.r.t. $y$. Please check the doc strings for
-what `tol` does in each method, where `tol = atol` or `tol = rtol * prev`. In
+what `tol` does in each method, where `tol = atol` or `tol = rtol * abs(prev)`. In
 short
 
 * `SlopeRise`: `last - tol > prev`
@@ -84,7 +84,7 @@ Can we get "transferable" tolerances? Well, kind of.
 * Absolute (`atol`) or relative (`rtol`) tolerances: If you know the unit of
   the history and can say something like "we call changes below 0.01
   converged", then use `atol`. Else, try to use a relative tolerance `rtol`, in
-  which case we use `tol = rtol * prev`.
+  which case we use `tol = rtol * abs(prev)`.
   * Pro: This will be invariant to scaling $y' = y s$.
   * Con: Will not be invariant to a shift $y' = y + c$.
 

@@ -185,9 +185,9 @@ class Base:
         prev = self.wlen_avg(np.array(history[-2 * self.wlen : -self.wlen]))
         last = self.wlen_avg(np.array(history[-self.wlen :]))
         if self.rtol is not None:
-            tol = self.rtol * prev
-            if abs(tol) < 2 * EPS:
-                warnings.warn(f"rtol: {abs(tol)=} < {2*EPS=}")
+            tol = self.rtol * abs(prev)
+            if tol < 2 * EPS:
+                warnings.warn(f"rtol: {tol=} < {2*EPS=}")
         else:
             tol = self.atol
         return prev, last, tol
