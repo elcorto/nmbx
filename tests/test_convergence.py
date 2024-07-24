@@ -36,9 +36,9 @@ class XyFactory:
             return x, y
 
 
-get_xy_fall_to_flat = XyFactory(lambda x: np.exp(-x))
-get_xy_rise_to_flat = XyFactory(lambda x: 1 - np.exp(-x))
-get_xy_rise_increasing = XyFactory(np.exp)
+get_xy_fall_to_flat = XyFactory(lambda x: np.exp(-x) + 1)
+get_xy_rise_to_flat = XyFactory(lambda x: 2 - np.exp(-x))
+get_xy_rise_increasing = XyFactory(lambda x: np.exp(x) + 1)
 
 
 class FakeCheck(Base):
@@ -71,7 +71,6 @@ def get_f_std(std):
 
 def test_fall_to_flat():
     x, y = get_xy_fall_to_flat()
-    y += 1.0
 
     conv = SlopeZeroAbs(atol=1e-3)
     assert conv.check(y)
@@ -92,7 +91,6 @@ def test_fall_to_flat():
 
 def test_rise_to_flat():
     x, y = get_xy_rise_to_flat()
-    y += 1.0
 
     conv = SlopeZeroAbs(atol=1e-3)
     assert conv.check(y)
@@ -113,7 +111,6 @@ def test_rise_to_flat():
 
 def test_rise_increasing():
     x, y = get_xy_rise_increasing()
-    y += 1.0
 
     conv = SlopeRise(atol=1e-3)
     assert conv.check(y)
