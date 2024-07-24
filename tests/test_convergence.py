@@ -290,6 +290,30 @@ def test_atol_std_xy_rise_increasing(
 
 
 @pytest.mark.parametrize(
+    "xy_func, cls, mode, pos_idx_ref",
+    [
+        (get_xy_fall_to_flat, SlopeZero, "min", 50),
+        (get_xy_fall_to_flat, SlopeZero, "abs", 50),
+        (get_xy_rise_to_flat, SlopeZero, "max", 43),
+        (get_xy_rise_to_flat, SlopeZero, "abs", 43),
+    ],
+)
+@pytest.mark.parametrize("scale, offset", _gen_combos_scale_offset())
+def test_rtol_xy_to_flat(xy_func, cls, mode, pos_idx_ref, scale, offset):
+    """Show that rtol is invariant to scale, but not offset in terms of pos_idx."""
+    _, history = xy_func()
+
+    conv = cls(rtol=0.005, mode=mode, wlen=5)
+    hh = history * scale + offset
+    pos_idx = conv.check_first(hh)
+    if offset == 0:
+        assert pos_idx == pos_idx_ref
+    else:
+        assert not pos_idx == pos_idx_ref
+        assert conv.check(hh)
+
+
+@pytest.mark.parametrize(
     "wait", [1, None, pytest.param(0, marks=pytest.mark.xfail)]
 )
 def test_no_wait(wait):
