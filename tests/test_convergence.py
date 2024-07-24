@@ -164,6 +164,14 @@ def test_rise():
     assert (conv.check_all(history) == bool_arr).all()
 
 
+def _gen_combos_scale_offset():
+    combos = []
+    for scale in [1, 100]:
+        for offset in [0, 1000, -1000]:
+            combos.append((scale, offset))
+    return combos
+
+
 def _gen_combos_std_scale_offset(
     std_lst=[
         "std",
@@ -178,9 +186,8 @@ def _gen_combos_std_scale_offset(
     combos = [(None, 1, 0)]
     for std in std_lst:
         assert std is not None
-        for scale in [1, 100]:
-            for offset in [0, 100]:
-                combos.append((std, scale, offset))
+        for scale, offset in _gen_combos_scale_offset():
+            combos.append((std, scale, offset))
     return combos
 
 
