@@ -148,9 +148,15 @@ if __name__ == "__main__":
     )
     axs[0].plot(y, ".", alpha=0.2)
     ylim = axs[0].get_ylim()
-    axs[0].vlines(idx, *ylim)
-    axs[0].vlines(np.argmin(np.abs(x - target)), *ylim, ls="--")
+    axs[0].vlines(idx, *ylim, label="conv point")
+    axs[0].vlines(
+        np.argmin(np.abs(x - target)),
+        *ylim,
+        ls="--",
+        label="target conv point",
+    )
     axs[0].plot(conv.smooth_f(y))
+    axs[0].legend()
 
     # Slow for many trials, see
     # https://optuna.readthedocs.io/en/stable/reference/generated/optuna.importance.get_param_importances.html.
