@@ -13,8 +13,7 @@ numbers, such as the loss when training machine learning models or any other
 iterative process with a converging metric.
 
 `SlopeZero` detects a flat plateau ("zero slope"), which is a general-purpose
-method. `SlopeRise` detects a rise in the history after a flat plateau. This
-could be used to monitor a validation loss, for instance.
+method. `SlopeRise` detects a rise in the history after a flat plateau.
 
 The idea is to call either in a training loop, passing a history of loss
 values.
@@ -24,7 +23,7 @@ values.
 ```py
 from nmbx.convergence import SlopeZero
 
-# Early stopping with wait=10 iterations of "patience", an absolute tolerance
+# Detect convergence with wait=10 iterations of "patience", an absolute tolerance
 # of 0.01 and a moving average window of wlen=25 points. Start checking not before
 # 100 iterations have been performed.
 conv = SlopeZero(wlen=25, atol=0.01, wait=10, delay=100)
@@ -39,9 +38,10 @@ while True:
 
 ### Methods
 
-`SlopeZero` implements the same logic as found in Keras' or Lightning's
-`EarlyStopping(mode=...)` with `mode="min"` or `"max"`. In addition we provide
-`mode="abs"` (detect convergence not assuming a direction).
+`SlopeZero` implements the same logic as found in [Keras'][keras_es] or
+[Lightning's][liight_es] `EarlyStopping(mode=...)` with `mode="min"` or
+`"max"`. In addition we provide `mode="abs"` (detect convergence not assuming a
+direction).
 
 Since we only work with a given list of numbers $y_i$ in the history, we have
 $\Delta x=1$ in the slope $\Delta y/\Delta x$. Therefore, the `atol` and `rtol`
@@ -149,3 +149,6 @@ convergence detection for many similar runs.
 ### Other packages
 
 * https://github.com/JuliaAI/EarlyStopping.jl
+
+[keras_es]: https://keras.io/api/callbacks/early_stopping
+[liight_es]: https://lightning.ai/docs/pytorch/stable/api/lightning.pytorch.callbacks.EarlyStopping.html#lightning.pytorch.callbacks.EarlyStopping
